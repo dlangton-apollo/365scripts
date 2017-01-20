@@ -10,7 +10,6 @@ $Session = New-PSSession -ConfigurationName Microsoft.Exchange -ConnectionUri ht
 Import-PSSession $Session
 
 # Grab the relevant users' mailboxes
-$Mailboxes = @()
 $ExcludedDomains = @("apollofire.hs-cloud.net")
 $users = Import-CSV .\Book3.csv
 
@@ -38,7 +37,7 @@ foreach ($user in $users)
         {
             $SplitAlias = $Alias.split("@")
             # Check that the domain isn't in the exclusions list, if not then add it
-            if ((-Not $ExcludedDomains.Contains($SplitAlias[1])) -and $Alias -ne $MsolUser.UserPrincipalName)
+            if ((-Not $ExcludedDomains.Contains($SplitAlias[1])))
             {
                 Write-Host -ForegroundColor Green "Adding" $Alias "alias for user" $user.FirstName $user.Surname
                 Set-Mailbox -Identity $Mailbox.Alias -EmailAddresses @{add=$Alias}
