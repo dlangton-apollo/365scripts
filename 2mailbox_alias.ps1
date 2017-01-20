@@ -1,25 +1,34 @@
-# Script to bulk add mailbox alias in Exchange 365
+<#
+
+.SYNOPSIS
+    Reads a CSV file of email aliases and applies them to the correct Mailbox
+
+.DESCRIPTION
+    This script reads in a CSV file that contains the fields FirstName, Surname, PrimarySMTPAddress and EmailAddress.
+    The semicolon separated addresses in the EmailAddress are added as aliases to the user's mailbox.
+
+.NOTES
+    Author: David Langton
+
+#>
 
 $UserCredential  = Get-Credential
 
-# Attempt to connect to Office 365
-Connect-MsolService -Credential $UserCredential
-
-# Attempt to connect to Exchange Online
+# Connect to Exchange Online
 $Session = New-PSSession -ConfigurationName Microsoft.Exchange -ConnectionUri https://outlook.office365.com/powershell-liveid/ -Credential $UserCredential -Authentication Basic -AllowRedirection
 Import-PSSession $Session
 
-# Grab the relevant users' mailboxes
 $ExcludedDomains = @("apollofire.hs-cloud.net")
+
+# Import user data from CSV file
 $users = Import-CSV .\Book3.csv
 
 foreach ($user in $users)
 {
-    # Grab the MsolUser and Mailbox
+    # Grab the user's Mailbox
     $Mailbox = Get-Mailbox -Identity $user.PrimarySMTPAddress
-    $MsolUser = Get-MsolUser -UserPrincipalName (($Mailbox.UserPrincipalName).toString())
 
-    # First, add the @afdl.onmicrosoft.com alias, if it doesn't already exist
+    # First, add the @afdl.onmicrosoft.com alias
     if ($User.Surname -eq "")
     {
         $NewAddress = $User.FirstName + "@afdl.onmicrosoft.com"
@@ -29,7 +38,7 @@ foreach ($user in $users)
 
     Set-Mailbox -Identity $Mailbox.Alias -EmailAddresses @{add=$NewAddress}
 
-    # Now add any other aliases from the csv file, if they don't already exist
+    # Now add any other aliases from the csv file
     $Aliases = $user.EMailAddress.Split(";")
     foreach ($Alias in $Aliases)
     {
