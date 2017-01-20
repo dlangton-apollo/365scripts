@@ -12,7 +12,7 @@ Import-PSSession $Session
 # Grab the relevant users' mailboxes
 $Mailboxes = @()
 $ExcludedDomains = @("apollofire.hs-cloud.net")
-$users = Import-CSV .\migration.csv
+$users = Import-CSV .\Book3.csv
 
 foreach ($user in $users)
 {
@@ -28,10 +28,7 @@ foreach ($user in $users)
         $NewAddress = $User.FirstName + "." + $User.Surname + "@afdl.onmicrosoft.com"
     }
 
-    if (-Not $Mailbox.EmailAddresses -contains "smtp:" + $NewAddress)
-    {
-        $Mailbox.EmailAddresses += $NewAddress
-    }
+    Set-Mailbox -Identity $Mailbox.Alias -EmailAddresses @{add=$NewAddress}
 
     # Now add any other aliases from the csv file, if they don't already exist
     $Aliases = $user.EMailAddress.Split(";")
@@ -43,18 +40,12 @@ foreach ($user in $users)
             # Check that the domain isn't in the exclusions list, if not then add it
             if ((-Not $ExcludedDomains.Contains($SplitAlias[1])) -and $Alias -ne $MsolUser.UserPrincipalName)
             {
-                Write-Host "Adding" $Alias "alias for user" $user.FirstName $user.Surname
-                
-                if (-Not $Mailbox.EmailAddresses -contains "smtp:" + $Alias)
-                {
-                    $Mailbox.EmailAddresses += $Alias
-                }
+                Write-Host -ForegroundColor Green "Adding" $Alias "alias for user" $user.FirstName $user.Surname
+                Set-Mailbox -Identity $Mailbox.Alias -EmailAddresses @{add=$Alias}
             }
         }
     }
 
-    # Commit the changes
-    Set-Mailbox -Identity $Mailbox.Alias -EmailAddresses $Mailbox.EmailAddresses -ErrorAction SilentlyContinue
 }
 
 # Disconnect the remote session
